@@ -225,29 +225,32 @@ Visual/media analysis isolated from the orchestrator context.
 
 ## Direct Work Boundary
 
-Background orchestration removes the orchestrator-as-worker default.
+Background orchestration removes the orchestrator-as-worker default. The
+orchestrator is **strictly a coordinator**: it has no read/write/edit/search/shell
+tools and must delegate all execution.
 
 The orchestrator may directly:
 
 - ask clarifying questions,
-- read minimal context needed to route work,
 - create and update todos,
-- launch and monitor tasks,
-- synthesize results,
-- run final checks when that is cheaper than delegating.
+- launch, monitor, and cancel tasks,
+- synthesize and reconcile specialist results.
 
 The orchestrator should delegate:
 
+- any file reading or codebase search (→ `explorer`),
 - broad code search,
-- unfamiliar library research,
-- implementation,
-- test creation or updates,
-- UI polish,
-- architecture review,
-- visual/media analysis.
+- unfamiliar library or web research (→ `librarian`),
+- implementation and test creation/updates (→ `fixer`/`designer`),
+- UI polish (→ `designer`),
+- architecture review (→ `oracle`),
+- running commands, checks, and diagnostics (→ `fixer`),
+- visual/media analysis (→ `observer`).
 
-This keeps the main context focused on coordination instead of filling it with
-worker detail.
+If the orchestrator needs a small snippet to make a routing decision, it should
+ask the relevant specialist to return only that minimal context rather than
+reading it itself. This keeps the main context focused on coordination instead
+of filling it with worker detail.
 
 ---
 

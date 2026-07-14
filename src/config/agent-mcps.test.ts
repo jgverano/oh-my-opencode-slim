@@ -14,14 +14,16 @@ describe('parseList', () => {
     ]);
   });
 
-  test('orchestrator wildcard excludes context7 but includes custom mcps', () => {
+  test('orchestrator has no mcps (coordinator must delegate research)', () => {
+    expect(DEFAULT_AGENT_MCPS.orchestrator).toEqual([]);
+  });
+
+  test('parseList wildcard excludes context7 but includes custom mcps', () => {
     expect(
-      parseList(DEFAULT_AGENT_MCPS.orchestrator, [
-        'websearch',
-        'context7',
-        'gh_grep',
-        'custom-mcp',
-      ]),
+      parseList(
+        ['*', '!context7'],
+        ['websearch', 'context7', 'gh_grep', 'custom-mcp'],
+      ),
     ).toEqual(['websearch', 'gh_grep', 'custom-mcp']);
   });
 

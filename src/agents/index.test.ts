@@ -244,6 +244,71 @@ describe('orchestrator agent', () => {
   });
 });
 
+describe('orchestrator coordinator-only tools', () => {
+  test('orchestrator has no read/write/edit/search/shell tools', () => {
+    const agents = createAgents();
+    const orchestrator = agents.find((a) => a.name === 'orchestrator');
+    const permission = orchestrator?.config.permission as Record<
+      string,
+      string
+    >;
+    expect(permission).toBeDefined();
+    expect(permission['*']).toBe('deny');
+    expect(permission.read).toBe('deny');
+    expect(permission.edit).toBe('deny');
+    expect(permission.write).toBe('deny');
+    expect(permission.apply_patch).toBe('deny');
+    expect(permission.ast_grep_replace).toBe('deny');
+    expect(permission.bash).toBe('deny');
+    expect(permission.glob).toBe('deny');
+    expect(permission.grep).toBe('deny');
+    expect(permission.lsp).toBe('deny');
+    expect(permission.list).toBe('deny');
+    expect(permission.codesearch).toBe('deny');
+    expect(permission.ast_grep_search).toBe('deny');
+  });
+
+  test('orchestrator can still delegate via task', () => {
+    const agents = createAgents();
+    const orchestrator = agents.find((a) => a.name === 'orchestrator');
+    const permission = orchestrator?.config.permission as Record<
+      string,
+      string
+    >;
+    expect(permission.task).toBe('allow');
+  });
+
+  test('orchestrator keeps question, cancel_task allowed and council_session denied', () => {
+    const agents = createAgents();
+    const orchestrator = agents.find((a) => a.name === 'orchestrator');
+    const permission = orchestrator?.config.permission as Record<
+      string,
+      string
+    >;
+    expect(permission.question).toBe('allow');
+    expect(permission.cancel_task).toBe('allow');
+    expect(permission.council_session).toBe('deny');
+  });
+
+  test('orchestrator keeps command-style skills allowed', () => {
+    const agents = createAgents();
+    const orchestrator = agents.find((a) => a.name === 'orchestrator');
+    const skillPerm = (
+      orchestrator?.config.permission as Record<string, unknown>
+    )?.skill as Record<string, string>;
+    expect(skillPerm?.['*']).toBe('allow');
+  });
+
+  test('orchestrator prompt forbids raw code and declares no tools', () => {
+    const agents = createAgents();
+    const orchestrator = agents.find((a) => a.name === 'orchestrator');
+    const prompt = orchestrator?.config.prompt ?? '';
+    expect(prompt).toContain('strictly a coordinator');
+    expect(prompt).toContain('forbidden from writing raw code');
+    expect(prompt).toContain('Tool Boundary');
+  });
+});
+
 describe('per-model variant in array config', () => {
   test('subagent stores model array with per-model variants', () => {
     const config: PluginConfig = {

@@ -18,7 +18,7 @@ Built-in Model Context Protocol (MCP) servers ship with oh-my-opencode-slim and 
 
 | Agent | Default MCPs |
 |-------|-------------|
-| `orchestrator` | `*`, `!context7` |
+| `orchestrator` | none (coordinator — must delegate research/media analysis to `librarian`/`observer`) |
 | `librarian` | `websearch`, `context7`, `gh_grep` |
 | `designer` | none |
 | `oracle` | none |

@@ -12,7 +12,7 @@ Each agent is a **prompt-driven specialist** with a factory function that create
 
 | Agent | Factory | Role | Permissions | Model Default |
 |-------|---------|------|-------------|---------------|
-| **orchestrator** | `createOrchestratorAgent()` | Workflow manager that delegates tasks to specialists | Primary agent with full tool access | Resolved from config or runtime preset |
+| **orchestrator** | `createOrchestratorAgent()` | Strictly a coordinator that delegates all execution to specialists | Coordinator-only (no read/write/edit/search/shell; only `task`, `question`, `cancel_task`, skills) | Resolved from config or runtime preset |
 | **explorer** | `createExplorerAgent()` | Fast codebase search and pattern matching | Read-only (glob, grep, ast_grep_search) | DEFAULT_MODELS.explorer |
 | **librarian** | `createLibrarianAgent()` | External documentation and library research | Read-only (context7, gh_grep, websearch) | DEFAULT_MODELS.librarian |
 | **oracle** | `createOracleAgent()` | Strategic technical advisor and code reviewer | Read-only (read, glob, grep, ast_grep_search) | DEFAULT_MODELS.oracle |

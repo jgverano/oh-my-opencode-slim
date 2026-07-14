@@ -1,5 +1,5 @@
 import type { AgentConfig } from '@opencode-ai/sdk/v2';
-import { WRITABLE_FILE_OPERATIONS_RULES } from '../config';
+import { createCoordinatorAgentPermission } from './permissions';
 
 export interface AgentDefinition {
   name: string;
@@ -147,7 +147,9 @@ export function buildOrchestratorPrompt(disabledAgents?: Set<string>): string {
   ).join('\n');
 
   return `<Role>
-You are a workflow manager for coding work. Your job is to plan, schedule, delegate, monitor, reconcile, and verify specialist-agent work. You are not the default implementation worker.
+You are strictly a coordinator. You are forbidden from writing raw code; you must delegate all execution. You have no read, write, edit, shell, or exploration tools. Your only execution tool is \`task\` (delegation) plus \`question\` and \`cancel_task\`. Everything else — reading files, searching the codebase, running commands, editing code, researching docs, analyzing media — must be delegated to a specialist agent.
+
+Your job is to plan, schedule, delegate, monitor, reconcile, and verify specialist-agent work. You are not an implementer, an explorer, or a researcher. If you find yourself wanting to read a file, search code, run a command, or edit a source line, that is a signal you must delegate instead.
 
 Optimize for quality, speed, cost, and reliability by dispatching the right specialist lanes, tracking background task state, and integrating terminal results into one coherent outcome.
 You have perfect understanding of agent's context management, understand well the cost of building content and reusing context of existing agents when it's best or when it's best to spawn a new agent.
@@ -174,12 +176,21 @@ Review available agents and lane rules.
 **Dispatch efficiency:**
 - Reference paths/lines, don't paste files (\`src/app.ts:42\` not full contents)
 - Brief user on delegation goal before each call
-- For trivial conversational answers or tiny mechanical edits, direct execution is allowed when scheduling overhead would clearly dominate
+- For trivial conversational answers only, direct response is allowed when no file/system work is needed
+- Never perform file reads, edits, writes, shell commands, or codebase searches yourself — delegate every such action
 - Record task IDs, state, and advisory ownership/dependency labels
 - Do not immediately wait after spawning independent background tasks unless the next step truly depends on their result
 - Reconcile results, resolve conflicts, and gate dependent lanes
 
-${WRITABLE_FILE_OPERATIONS_RULES}
+**Tool Boundary**:
+- You have NO read/write/edit/search/shell tools. Do not attempt to call them.
+- Reading file contents → delegate to @explorer (for a summarized map) or ask a writer lane (@fixer/@designer) to read then act.
+- Codebase search (glob/grep/AST) → @explorer.
+- Running commands (git, tests, builds, scripts) → @fixer.
+- Code edits → @fixer (headless) or @designer (UI/UX).
+- Library/web research → @librarian.
+- Visual/media analysis → @observer.
+- If you need a small snippet to make a delegation decision, ask the relevant specialist to return only that minimal context rather than reading it yourself.
 
 ## 4. Plan and Parallelize
 Build a short work graph before dispatching:
@@ -203,7 +214,7 @@ Balance: respect dependencies, avoid parallelizing what must be sequential, and 
 - Launch specialist agents in the background by default so the orchestrator stays unblocked and can reconcile results when they return.
 - Track each task's specialist, objective, task/session ID, and file/topic ownership.
 - Continue orchestration only on non-overlapping work; otherwise briefly report what was launched and stop.
-- Before local edits or another writer task, compare against running task scopes.
+- Before spawning another writer task, compare against running task scopes.
 - Parallel background tasks are allowed only when their write scopes do not conflict.
 - Before final response, reconcile any terminal jobs shown in the Background Job Board.
 - Use \`cancel_task\` only when the user asks, or when a running lane is obsolete, wrong, or conflicts with a safer replacement plan.
@@ -287,6 +298,11 @@ export function createOrchestratorAgent(
     config: {
       temperature: 0.1,
       prompt,
+      // Coordinator-only: no read/write/edit/search/shell tools. The
+      // orchestrator must delegate all execution via `task`. question,
+      // cancel_task, council_session, and skill perms are layered on later
+      // by applyDefaultPermissions.
+      permission: createCoordinatorAgentPermission(),
     },
   };
 
